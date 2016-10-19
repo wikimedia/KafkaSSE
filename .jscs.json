@@ -1,0 +1,34 @@
+{
+  "preset": "node-style-guide",
+  "requireCurlyBraces": [
+    "if",
+    "else",
+    "for",
+    "while",
+    "do",
+    "try",
+    "catch"
+  ],
+  "validateIndentation": 4,
+  "requireCamelCaseOrUpperCaseIdentifiers": {
+    "ignoreProperties": true
+  },
+  "requireCapitalizedComments": null,
+  "maximumLineLength": 100,
+  "validateQuoteMarks": null,
+  "requireTrailingComma": null,
+  "disallowTrailingComma": null,
+  "requireSpacesInsideObjectBrackets": "all",
+  "requireEarlyReturn": false,
+  "disallowKeywordsOnNewLine": false,
+  "requireCamelCaseOrUpperCaseIdentifiers": false,
+  "excludeFiles": [
+    "examples/**",
+    "node_modules/**",
+    "test/**",
+    "coverage/**",
+    "cover/**",
+    "docs/**",
+    "scr/**"
+  ]
+}
