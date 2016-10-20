@@ -15,7 +15,7 @@ const bunyan       = require('bunyan');
 const http         = require('http');
 const EventSource  = require('eventsource');
 const sinon        = require('sinon');
-const fetch        = require('node-fetch-polyfill');
+const fetch        = require('node-fetch');
 
 
 // Topic names used for most tests
