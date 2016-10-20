@@ -53,6 +53,7 @@
     "mocha-lcov-reporter": "^1.2.0",
     "nsp": "^2.6.1",
     "eventsource": "^0.2.1",
-    "node-fetch": "^1.6.3"
+    "node-fetch": "^1.6.3",
+    "sinon": "^1.17.6"
   }
 }
