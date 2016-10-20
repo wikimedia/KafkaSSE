@@ -1,0 +1,58 @@
+{
+  "name": "kafka-sse",
+  "version": "0.0.1",
+  "description": "KafkaSSE - Kafka Consumer to HTTP SSE/EventSource",
+  "main": "index.js",
+  "scripts": {
+    "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
+    "test": "npm run test-jenkins",
+    "kafka-install": "./test/utils/kafka_install.sh",
+    "kafka-start": "./test/utils/kafka.sh start",
+    "kafka-stop": "./test/utils/kafka.sh stop",
+    "kafka-fixture": "./test/utils/kafka_fixture.sh",
+    "mocha": "export UV_THREADPOOL_SIZE=128; mocha",
+    "coverage": "export UV_THREADPOOL_SIZE=128 && ./node_modules/istanbul/lib/cli.js cover _mocha -- -R spec",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "test-local": "npm run kafka-fixture && npm run coverage",
+    "test-jenkins": "npm run kafka-install && npm run kafka-stop && npm run kafka-start && npm run kafka-fixture && npm run coverage && npm run kafka-stop",
+    "test-travis": "npm run kafka-install && npm run kafka-start && npm run kafka-fixture && npm run coverage && npm run coveralls"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://phabricator.wikimedia.org/diffusion/WKSK/kasocki.git"
+  },
+  "keywords": [
+    "kafka",
+    "http",
+    "sse",
+    "eventsource",
+    "stream"
+  ],
+  "author": "Andrew Otto <otto@wikimedia.org>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://phabricator.wikimedia.org/search/query/fpxAPkMeWqjh/"
+  },
+  "homepage": "https://github.com/ottomata/KafkaSSE#readme",
+  "dependencies": {
+    "bunyan": "^1.8.1",
+    "bluebird": "^3.4.3",
+    "node-rdkafka": "^0.3.3",
+    "lodash": "^4.15.0",
+    "safe-regex": "^1.1.0",
+    "sse": "^0.0.6",
+    "node-uuid": "^1.4.7"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.4",
+    "jscs": "^3.0.7",
+    "mocha": "^2.5.3",
+    "mocha-jscs": "^5.0.1",
+    "mocha-jshint": "^2.3.1",
+    "coveralls": "^2.11.11",
+    "mocha-lcov-reporter": "^1.2.0",
+    "nsp": "^2.6.1",
+    "eventsource": "^0.2.1",
+    "node-fetch": "^1.6.3"
+  }
+}
