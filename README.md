@@ -1,5 +1,8 @@
 # KafkaSSE
 
+[![Travis Build Status](https://travis-ci.org/wikimedia/KafkaSSE.svg?branch=master)](https://travis-ci.org/wikimedia/KafkaSSE)
+[![Coveralls](https://coveralls.io/repos/github/wikimedia/KafkaSSE/badge.svg?branch=master)](https://coveralls.io/github/wikimedia/KafkaSSE?branch=master)
+
 Kafka Consumer to HTTP SSE/EventSource
 
 Uses [node-rdkafka](https://github.com/Blizzard/node-rdkafka) KafkaConsumer to
