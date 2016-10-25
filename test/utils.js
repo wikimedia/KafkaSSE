@@ -135,8 +135,8 @@ describe('buildAssignments', () => {
 describe('deserializeKafkaMessage', () => {
     it('should return an augmented message from a Kafka message', function() {
         let kafkaMessage = {
-            message: '{ "first_name": "Dorkus", "last_name": "Berry" }',
-            topic: 'test',
+            value: new Buffer('{ "first_name": "Dorkus", "last_name": "Berry" }'),
+            topic_name: 'test',
             partition: 1,
             offset: 123,
             key: 'myKey',
@@ -144,7 +144,7 @@ describe('deserializeKafkaMessage', () => {
 
         let msg = utils.deserializeKafkaMessage(kafkaMessage);
         assert.equal(msg.message.first_name, "Dorkus");
-        assert.equal(msg.message._kafka.topic, kafkaMessage.topic, 'built message should have topic');
+        assert.equal(msg.message._kafka.topic, kafkaMessage.topic_name, 'built message should have topic');
         assert.equal(msg.message._kafka.partition, kafkaMessage.partition, 'built message should have partition');
         assert.equal(msg.message._kafka.offset, kafkaMessage.offset, 'built message should have offset');
         assert.equal(msg.message._kafka.key, kafkaMessage.key, 'built message should have key');

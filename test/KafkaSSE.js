@@ -18,7 +18,7 @@ const sinon        = require('sinon');
 const fetch        = require('node-fetch');
 
 
-// Topic names used for most tests
+// Topic names used for most tests.  kafkaSSE_test_04 is also used.
 const topicNames = [
     'kafkaSSE_test_01',
     'kafkaSSE_test_02',
@@ -144,12 +144,12 @@ assert.topicOffsetsInMessages = (messages, topicOffsets) => {
         });
         // assert that messages contained a message
         // consumed from topic at offset.
-        assert.ok(foundIt, `message in ${topicOffset.topic} in partition ${topicOffset.partition} at ${topicOffset.offset} should be found`);
+        assert.ok(foundIt, `message in ${topicOffset.topic} in partition ${topicOffset.partition} at offset ${topicOffset.offset} should be found`);
     });
 }
 
 assert.errorNameEqual = (e, errorName) => {
-    assert.equal(e.name, errorName, `should error with ${errorName}, got ${e.name} instead.`);
+    assert.equal(e.name, errorName, `should error with ${errorName}, got ${e.name} instead`);
 }
 
 
@@ -448,7 +448,7 @@ describe('KafkaSSE', function() {
 
         const kafka = require('node-rdkafka');
         var producer = new kafka.Producer({
-          'metadata.broker.list': 'localhost:9092',
+            'metadata.broker.list': 'localhost:9092',
         });
         producer = P.promisifyAll(producer, {});
 
@@ -486,11 +486,12 @@ describe('KafkaSSE', function() {
             return P.delay(3000)
             // Then produce a message;
             .then(() => {
-                return producer.produceAsync({
-                    message: new Buffer('{"a": "new message"}'),
-                    partition: 0,
-                    topic: topic
-                })
+                return producer.produceAsync(
+                    topic,
+                    null,
+                    new Buffer('{"a": "new message"}'),
+                    null
+                );
             });
         });
     });
