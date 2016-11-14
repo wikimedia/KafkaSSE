@@ -4,9 +4,9 @@
 // mocha defines to avoid JSHint breakage
 /* global describe, it, before, beforeEach, after, afterEach */
 
-var assert = require('assert');
+const assert = require('assert');
 
-var utils = require('../lib/utils.js');
+const utils = require('../lib/utils.js');
 
 const topicsInfo = [
     { name: 'test0', partitions: [
@@ -17,6 +17,36 @@ const topicsInfo = [
         { id: 1, leader: 0, replicas: [ 0 ], isrs: [0] }
     ] },
 ];
+
+
+describe('objectFactory', () => {
+    const o = {
+        'a': 'b',
+        'o2': {
+            'e': 1,
+            'r': 'abbbbc',
+        },
+        'array': ['a', 'b', 'c']
+    };
+
+    it('should return same object if given object', () => {
+        assert.equal(utils.objectFactory(o), o);
+    });
+
+    it('should return object from JSON string', () => {
+        assert.deepEqual(utils.objectFactory(JSON.stringify(o)), o);
+    });
+
+    it('should return object from JSON Buffer', () => {
+        let buffer = new Buffer(JSON.stringify(o));
+        assert.deepEqual(utils.objectFactory(buffer), o);
+    });
+
+    it('should fail with wrong type', () => {
+        assert.throws(utils.objectFactory.bind(undefined, 12345));
+    });
+});
+
 
 describe('getAvailableTopics', () => {
     it('should return existent topics if allowedTopics is not specified', () => {

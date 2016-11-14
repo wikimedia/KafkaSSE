@@ -25,6 +25,10 @@ const topicNames = [
     'kafkaSSE_test_03'
 ];
 
+// This topic will be used for some tests, but will not be in the
+// a configured list of 'allowed topics'.
+const otherTopicName = 'kafkaSSE_test_04'
+
 const serverPort = 6899;
 const logLevel   = 'fatal';
 // const logLevel   = 'debug';
@@ -46,6 +50,17 @@ function customDeserializer(kafkaMessage) {
     // with kafkaMessage.message deserialized from the kafka message value.
     kafkaMessage.message = customDeserializedMessage;
     return kafkaMessage;
+}
+
+
+function customFilterer(kafkaMessage) {
+    // only return message with id == 2.
+    if (kafkaMessage.message.id == 2) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 /**
@@ -82,6 +97,12 @@ class TestKafkaSSEServer {
                 deserializer: customDeserializer
             },
 
+            // filter route uses a custom filterer
+            filter: {
+                logger: this.log,
+                filterer: customFilterer
+            },
+
             // notopics will always fail, since none of the allowed topics exist.
             notopics: {
                 logger: this.log,
@@ -106,19 +127,6 @@ class TestKafkaSSEServer {
             const options = routeOptionsMap[route];
             const kafkaSSE = new KafkaSSE(req, res, options);
             kafkaSSE.connect(topics);
-
-            // req.on('close', () => {
-            //     // TODO: This is a total hack.  Calling KafkaConsumer
-            //     // disconnect can result in hung processes until
-            //     // messages/consumer connections are GCed.  This
-            //     // can cause tests to never finish.  By
-            //     // deleting the kafka consumer instance before
-            //     // KafkaSSE handlesclient disconnect event,
-            //     // KafkaSSE will not attempt to call kafka consumer disconnect().
-            //     // See: https://github.com/Blizzard/node-rdkafka/issues/5
-            //     console.log('deleting consumer on req close');
-            //     delete this.KafkaSSE.kafkaConsumer;
-            // });
         });
     }
 
@@ -391,7 +399,7 @@ describe('KafkaSSE', function() {
     });
 
     it('should fail subscribe to not allowed topic', (done) => {
-        httpRequestAsync(serverPort, 'restrictive', ['kafkaSSE_test_04'], undefined)
+        httpRequestAsync(serverPort, 'restrictive', [otherTopicName], undefined)
         .then(res => {
             assert.equal(res.status, 404);
             done();
@@ -442,9 +450,9 @@ describe('KafkaSSE', function() {
     });
 
     it('should subscribe and consume with offset reset to latest', (done) => {
-        // Since we will produce data to kafkaSSE_test_04, it is reserved for
+        // Since we will produce data to otherTopicName, it is reserved for
         // this test only.
-        const topicName = 'kafkaSSE_test_04';
+        const topicName = otherTopicName;
 
         const kafka = require('node-rdkafka');
         var producer = new kafka.Producer({
@@ -516,6 +524,30 @@ describe('KafkaSSE', function() {
                     const message = spy.args[0][0];
                     assert(message['i am'], customDeserializedMessage['i am'], 'message object should be set by custom deserializer');
                     assert(message._kafka.offset, customDeserializedMessage._kafka.offset, 'offset should be set by custom deserializer');
+                    done();
+                }
+            })
+        );
+    });
+
+    // == Test custom filter function
+
+    it('should take a custom filter function and use it', (done) => {
+
+        const assignment = [
+            { topic: topicNames[1], partition: 0, offset: 0 },
+        ];
+
+        sseRequest(
+            serverPort,
+            'filter',
+            [topicNames[1]],
+            assignment,
+            spyWithCb(spy => {
+                if (spy.callCount >= 1) {
+                    // message returned to us is the first arg of the first spied call
+                    const message = spy.args[0][0];
+                    assert(message.id, 2, 'should only consume one message with id because of custom filter');
                     done();
                 }
             })
