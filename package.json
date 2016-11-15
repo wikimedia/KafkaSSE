@@ -1,6 +1,6 @@
 {
   "name": "kafka-sse",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "KafkaSSE - Kafka Consumer to HTTP SSE/EventSource",
   "main": "index.js",
   "scripts": {
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://phabricator.wikimedia.org/diffusion/WKSK/kasocki.git"
+    "url": "https://phabricator.wikimedia.org/diffusion/WKSE/kafkasse.git"
   },
   "keywords": [
     "kafka",
@@ -33,7 +33,7 @@
   "bugs": {
     "url": "https://phabricator.wikimedia.org/search/query/fpxAPkMeWqjh/"
   },
-  "homepage": "https://github.com/ottomata/KafkaSSE#readme",
+  "homepage": "https://github.com/wikimedia/kafkasse#readme",
   "dependencies": {
     "bunyan": "^1.8.1",
     "bluebird": "^3.4.3",

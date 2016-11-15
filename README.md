@@ -46,6 +46,61 @@ server.listen(6917);
 console.log('Listening for SSE connections at http:/localhost:6917/:topics');
 ```
 
+
+### Custom deserializer
+
+The default deserializer used for messages returned from node-rdkafka assumes
+that `kafkaMessage.value` is a utf-8 byte buffer containing a JSON string.  It parses
+`kafkaMessage.value` into an object, and then sets it as `kafkaMessage.message`.
+`kafkaMessage.message` is what will be sent to the connected SSE client as an
+event.
+
+You may override this default deserializer.  The deserializer is given the `kafkaMessage` as
+returned by node-rdkafka `consume`.  You must make sure to set the `message` field on this
+object, and not modify the other top level fields such as `topic`, `offset` and `partition`.
+These are used to set the `Last-Event-ID` header.
+
+```javascript
+function customDeserializer(kafkaMessage) {
+    kafkaMessage.message = JSON.parse(kafkaMessage.value.toString());
+    kafkaMessage.message.extraInfo = 'I was deserialized by a custom deserializer';
+    return kafkaMesssage;
+}
+
+//...
+
+kafkaSse(req, res, topics, {
+    deserializer: customDeserializer,
+});
+
+// ...
+```
+
+### Server Side filtering
+
+By default, all consumed messages are sent to the client.  However, you may provide
+a custom filter function as the `filterer` option.
+This function will be given the `kafkaMessage` as returned
+by the `deserializer` function.  The message will be kept and sent to the client if your
+filter function returns true, otherwise it will be skipped.
+
+```javascript
+/**
+ * Only send events to SSE clients that have `price` field greater than `10.0`;
+ */
+function filterFunction(kafkaMessage) {
+    return kafkaMessage.message.price >= 10.0;
+}
+
+//...
+
+kafkaSse(req, res, topics, {
+    filterer: filterFunction,
+});
+
+// ...
+```
+
 ### NodeJS EventSource usage
 ```javascript
 const EventSource = require('eventsource');
@@ -137,11 +192,3 @@ the commands used in`kafka_fixtue.sh`.
 ## To Do
 
 - tests for kafkaEventHandlers
-- statsd + metrics
-- Get upstream fix for https://github.com/Blizzard/node-rdkafka/issues/5
-  this will need to be resolved before this can be used in any type of production
-  setting.
-- rdkafka statsd: https://phabricator.wikimedia.org/T145099
-- filter, jsonschema? jsonschema query?
-
-- Replace Kasocki references in package.json

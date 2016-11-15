@@ -438,7 +438,7 @@ describe('KafkaSSE', function() {
 
     it('should fail subscribe to not allowed assigments in last-event-id', (done) => {
         const assignment = [
-            {topic: 'kasocki_test_04', partition: 0, offset: 0},
+            {topic: otherTopicName, partition: 0, offset: 0},
         ];
 
         httpRequestAsync(serverPort, 'restrictive', [topicNames[0]], assignment)
