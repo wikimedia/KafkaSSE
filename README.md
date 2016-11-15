@@ -130,14 +130,9 @@ Mocha tests require a running 0.9+ Kafka broker at `localhost:9092` with
 `delete.topic.enable=true`.  `test/utils/kafka_fixture.sh` will prepare
 topics in Kafka for tests.  `npm test` will download, install, and run
 a Kafka broker.  If you already have one running locally, then
-`npm run test-local` will be easier to run.
-
-Note that there is a
-[bug in librdkafka/node-rdkafka](https://github.com/edenhill/librdkafka/issues/775)
-that keeps tests from shutting down once done.  This bug also has implications
-for the number of consumers a process can run at once in its lifetime,
-and will have to be resolved somehow before this is put into production.
-
+`npm run test-local` will be easier to run.  You may set the `KAFKA_TOPICS_CMD` and
+the `KAFKA_CONSOLE_PRODUCER_CMD` environment variables if you would like to override
+the commands used in`kafka_fixtue.sh`.
 
 ## To Do
 

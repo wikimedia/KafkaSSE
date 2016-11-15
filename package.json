@@ -37,7 +37,7 @@
   "dependencies": {
     "bunyan": "^1.8.1",
     "bluebird": "^3.4.3",
-    "node-rdkafka": "git+https://github.com/Blizzard/node-rdkafka.git",
+    "node-rdkafka": "^0.6.0",
     "lodash": "^4.15.0",
     "safe-regex": "^1.1.0",
     "sse": "^0.0.6",

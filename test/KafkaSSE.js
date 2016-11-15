@@ -273,7 +273,7 @@ function assertMessagesConsumedSpy(shouldConsumeOffsets, done) {
 
 
 describe('KafkaSSE', function() {
-    this.timeout(20000);
+    this.timeout(30000);
 
     const server = new TestKafkaSSEServer(serverPort);
 
@@ -315,7 +315,6 @@ describe('KafkaSSE', function() {
         const shouldConsumeOffsets = [
             {topic: topicNames[0], partition: 0, offset: 0},
         ];
-
 
         sseRequest(
             serverPort,
@@ -468,8 +467,6 @@ describe('KafkaSSE', function() {
 
         producer.connectAsync(undefined)
         .then(() => {
-            const topic = producer.Topic(topicName, {'request.required.acks': 1});
-
             const assignment = [ { topic: topicName, partition: 0, offset: 99999999999 } ];
 
             const shouldConsumeOffsets = [
@@ -495,8 +492,8 @@ describe('KafkaSSE', function() {
             // Then produce a message;
             .then(() => {
                 return producer.produceAsync(
-                    topic,
-                    null,
+                    topicName,
+                    0,
                     new Buffer('{"a": "new message"}'),
                     null
                 );
