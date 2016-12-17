@@ -18,6 +18,11 @@ const sinon        = require('sinon');
 const fetch        = require('node-fetch');
 
 
+// Kafka host and port used when testing with docker
+const kafkaBroker = 'kafka:9092'
+// Kafka host and port used when testing with localhost
+//const kafkaBroker = 'localhost:9092'
+
 // Topic names used for most tests.  kafkaSSE_test_04 is also used.
 const topicNames = [
     'kafkaSSE_test_01',
@@ -66,7 +71,8 @@ function customFilterer(kafkaMessage) {
 /**
  * KafkaSSE test server.
  * Connect to this with a client on port.
- * Kafka broker must be running at localhost:9092.
+ * Kafka broker must be running at `kafkaBroker`
+ * initialized variable value.
  */
 class TestKafkaSSEServer {
 
@@ -83,34 +89,39 @@ class TestKafkaSSEServer {
         const routeOptionsMap = {
             default: {
                 logger: this.log,
+                kafkaConfig: { 'metadata.broker.list': kafkaBroker }
             },
 
             // restrictive route will only allow access to specified topics
             restrictive: {
                 logger: this.log,
-                allowedTopics: topicNames
+                kafkaConfig: { 'metadata.broker.list': kafkaBroker },
+                allowedTopics: topicNames,
             },
 
             // deserializer route uses a custom deserializer
             deserializer: {
                 logger: this.log,
+                kafkaConfig: { 'metadata.broker.list': kafkaBroker },
                 deserializer: customDeserializer
             },
 
             // filter route uses a custom filterer
             filter: {
                 logger: this.log,
+                kafkaConfig: { 'metadata.broker.list': kafkaBroker },
                 filterer: customFilterer
             },
 
             // notopics will always fail, since none of the allowed topics exist.
             notopics: {
                 logger: this.log,
+                kafkaConfig: { 'metadata.broker.list': kafkaBroker },
                 allowedTopics: ['_nope_not_a_topic']
             },
         }
 
-        // Kafka broker should be running at localhost:9092.
+        // Kafka broker should be running at `kafkaBroker`.
         this.server.on('request', (req, res) => {
             // Routes:
             // /default/:topics         - no special options
@@ -125,6 +136,7 @@ class TestKafkaSSEServer {
 
             // get the KafkaSSE options to use for this route
             const options = routeOptionsMap[route];
+
             const kafkaSSE = new KafkaSSE(req, res, options);
             kafkaSSE.connect(topics);
         });
@@ -455,7 +467,7 @@ describe('KafkaSSE', function() {
 
         const kafka = require('node-rdkafka');
         var producer = new kafka.Producer({
-            'metadata.broker.list': 'localhost:9092',
+            'metadata.broker.list': kafkaBroker
         });
         producer = P.promisifyAll(producer, {});
 
