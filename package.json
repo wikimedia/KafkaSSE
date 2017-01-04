@@ -1,6 +1,6 @@
 {
   "name": "kafka-sse",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "KafkaSSE - Kafka Consumer to HTTP SSE/EventSource",
   "main": "index.js",
   "scripts": {
