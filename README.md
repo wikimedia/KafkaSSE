@@ -181,6 +181,8 @@ KafkaSSE uses the [Standard Non flowing API](https://github.com/Blizzard/node-rd
 
 
 ## Testing
+
+### On host
 Mocha tests require a running 0.9+ Kafka broker at `localhost:9092` with
 `delete.topic.enable=true`.  `test/utils/kafka_fixture.sh` will prepare
 topics in Kafka for tests.  `npm test` will download, install, and run
@@ -188,6 +190,12 @@ a Kafka broker.  If you already have one running locally, then
 `npm run test-local` will be easier to run.  You may set the `KAFKA_TOPICS_CMD` and
 the `KAFKA_CONSOLE_PRODUCER_CMD` environment variables if you would like to override
 the commands used in`kafka_fixtue.sh`.
+
+### With Docker
+Testing with docker requires docker-engine >- 1.12.4 and docker-compose >= 1.9.0.
+All you have to do is run ./test/docker-tests.sh. You shouldn't even need to have
+node installed for this to run.
+
 
 ## To Do
 

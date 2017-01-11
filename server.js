@@ -7,6 +7,8 @@ const kafkaSseHandler = require('./index');
 
 const port = 6927;
 
+const kafkaBroker = 'localhost:9092'
+
 /**
  * Kasse test server.
  * Connect to this endpoint at localhost:${port}/:topics.
@@ -22,7 +24,10 @@ class KafkaSSEServer {
         this.server.on('request', (req, res) => {
             const topics = req.url.replace('/', '').split(',');
             console.log(`Handling SSE request for topics ${topics}`);
-            kafkaSseHandler(req, res, topics);
+            const options = {
+                kafkaConfig: { 'metadata.broker.list':  kafkaBroker }
+            }
+            kafkaSseHandler(req, res, topics, options);
         });
     }
 

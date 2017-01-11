@@ -1,0 +1,2 @@
+this is bad json!!!
+{"id": 3,"name": "Three red windows","price": 50.00,"tags": ["window", "red"], "user": {"first_name": "Rick", "last_name": "Blabla"}}

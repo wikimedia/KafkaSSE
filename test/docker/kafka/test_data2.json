@@ -1,0 +1,2 @@
+{"id": 1,"name": "A green door","price": 12.50,"tags": ["door", "green", "product"], "user": {"first_name": "Dingle", "last_name": "Berry"}}
+{"id": 2,"name": "Three red doors","price": 25.00,"tags": ["door", "red", "product"], "user": {"first_name": "Rick", "last_name": "Blabla"}}

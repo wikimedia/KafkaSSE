@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    networks:
+      - kafka_net
+  kafka:
+    build: ./kafka
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+    networks:
+      - kafka_net
+
+networks:
+  kafka_net:
+    # using default single-host driver
+    driver: bridge

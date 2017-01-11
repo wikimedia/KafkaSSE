@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
-    "test": "npm run test-jenkins",
+    "test": "npm run test-docker",
     "kafka-install": "./test/utils/kafka_install.sh",
     "kafka-start": "./test/utils/kafka.sh start",
     "kafka-stop": "./test/utils/kafka.sh stop",
@@ -15,7 +15,8 @@
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "test-local": "npm run kafka-fixture && npm run coverage",
     "test-jenkins": "npm run kafka-install && npm run kafka-stop && npm run kafka-start && npm run kafka-fixture && npm run coverage && npm run kafka-stop",
-    "test-travis": "npm run kafka-install && npm run kafka-start && npm run kafka-fixture && npm run coverage && npm run coveralls"
+    "test-travis": "npm run kafka-install && npm run kafka-start && npm run kafka-fixture && npm run coverage && npm run coveralls",
+    "test-docker": "./test/docker-tests.sh"
   },
   "repository": {
     "type": "git",
