@@ -1,4 +1,4 @@
-FROM nodejs_kafkasse
+FROM debian:jessie
 MAINTAINER jobar <joseph.allemandou@gmail.com>
 
 # Needed to prevent apt errors with debian image
