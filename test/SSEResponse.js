@@ -5,28 +5,30 @@ const SSEResponse = require('../lib/SSEResponse');
 const _           = require('lodash');
 const http        = require('http');
 const EventSource = require('eventsource');
-const sinon       = require('sinon');
 const fetch       = require('node-fetch');
 const assert      = require('assert');
 
-const port = 21100;
+const defaultPort = 21100;
+
 
 /**
  * Responds to http requests like: /:n, where n is the number of messages
  * that should be sent back to the SSE client.
  */
 class TestSSEServer {
-    constructor() {
+    constructor(port, responseOptions, messageBuilder) {
         this.server = http.createServer();
+        this.port = port || defaultPort;
+        this.messageBuilder = messageBuilder || defaultMessageBuilder;
 
         this.server.on('request', (req, res) => {
-            const messageCountToSend = req.url.replace('/', '');
-            sseSendN(req, res, messageCountToSend);
+            const messageCount = req.url.replace('/', '');
+            sseSendN(res, messageCount, responseOptions, this.messageBuilder);
         });
     }
 
     listen() {
-        this.server.listen(port);
+        return this.server.listen(this.port);
     }
 
     close() {
@@ -34,25 +36,30 @@ class TestSSEServer {
     }
 }
 
-function buildMessage(id) {
-    return 'data: ' + id;
+function defaultMessageBuilder(id) {
+    return ['message', 'data: ' + id];
+}
+
+function objectMessageBuilder(id) {
+    return ['message', {'data': id}];
 }
 
 /**
  * Creates a new SSEResponse object and sends n messages.
  */
-function sseSendN(req, res, n) {
-    let sseResponse = new SSEResponse(res);
+function sseSendN(res, n, options, messageBuilder) {
+    let sseResponse = new SSEResponse(res, options);
     sseResponse.start();
 
     let id = 0;
     _.times(n, () => {
-        const message = buildMessage(id);
-        sseResponse.send('message', message, id);
+        const message = messageBuilder(id);
+        sseResponse.send(message[0], message[1], id, 1000);
         id++;
     });
-}
 
+    sseResponse.end();
+}
 
 /**
  * Returns a promise of an HTTP request to an SSE endpoint.
@@ -60,8 +67,8 @@ function sseSendN(req, res, n) {
  */
 function httpRequestAsync(port, path) {
     let headers = {
-        'Accept': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'accept': 'text/event-stream',
+        'cache-control': 'no-cache',
     };
 
     return fetch(
@@ -97,52 +104,183 @@ function sseRequest(port, path, msgCb, errCb)  {
     return es;
 }
 
+class HTTPResponseMock {
+    constructor() {
+        this.written = [];
+        this.finished = false;
+    }
 
-/**
- * Returns a Sinon spy that will call fn(spy) whenever
- * the spy is called.
- */
-function spyWithCb(fn) {
-    let spy = sinon.spy(() => {
-        return fn(spy);
-    });
-    return spy;
+    writeHead(httpCode, headers) {
+        this.httpCode = httpCode;
+        this.headers = headers;
+    }
+
+    write(text) {
+        this.written.push(text);
+    }
+
+    headersSent() {
+        return this.headers !== undefined;
+    }
+
+    finished() {
+        return this.finished;
+    }
+
+    end() {
+        this.finished = true;
+    }
 }
 
+
 describe('SSEResponse', function() {
-    const server = new TestSSEServer();
+    const server = new TestSSEServer(defaultPort);
 
     before(server.listen.bind(server));
     after(server.close.bind(server));
 
     it('should connect and return 200', (done) => {
-        httpRequestAsync(port, 0)
+        httpRequestAsync(defaultPort, 0)
         .then(res => {
             assert.equal(res.status, 200);
+            done();
+        });
+    });
+
+    it('should return default headers', (done) => {
+        httpRequestAsync(defaultPort, 0)
+        .then(res => {
+            assert.equal(res.headers.get('content-type'), 'text/event-stream');
+            assert.equal(res.headers.get('cache-control'), 'no-cache');
+            assert.equal(res.headers.get('connection'), 'keep-alive');
             assert.equal(res.headers.get('transfer-encoding'), 'chunked');
             done();
         });
     });
 
-    it('should get 10 messages with Last-Event-ID set propertly', (done) => {
-        sseRequest(
-            port,
-            10,
-            spyWithCb(spy => {
-                if (spy.callCount >= 10) {
-                    // event returned to us is the first arg of the each spied call
-                    for (let i = 0; i < 10; i++) {
-                        const event = spy.args[i][0];
-                        const dataShouldBe = buildMessage(i);
-                        const idShouldBe   = i;
+    it('should return custom headers', (done) => {
+        const server = new TestSSEServer(1234, {'headers': {
+            'content-type': 'modified/content-type',
+            'new-header': 'new-value'
+        }}).listen();
+        httpRequestAsync(1234, 0)
+        .then(res => {
+            assert.equal(res.headers.get('content-type'), 'modified/content-type');
+            assert.equal(res.headers.get('cache-control'), 'no-cache');
+            assert.equal(res.headers.get('connection'), 'keep-alive');
+            assert.equal(res.headers.get('transfer-encoding'), 'chunked');
+            assert.equal(res.headers.get('new-header'), 'new-value');
+            server.close();
+            done();
+        });
+    });
 
-                        // Assert that each message has its Last-Event-ID
-                        assert.equal(event.lastEventId, idShouldBe);
-                        assert.equal(event.data, dataShouldBe);
-                    }
-                    done();
-                }
-            })
+    it('should serialize data with default serializer', (done) => {
+        const server = new TestSSEServer(1234, {}, objectMessageBuilder).listen();
+
+        sseRequest(
+            1234,
+            1,
+            (event) => {
+                const dataShouldBe = JSON.stringify(objectMessageBuilder(0)[1]);
+                assert.equal(event.data, dataShouldBe);
+                server.close();
+                done();
+            }
         );
+    });
+
+    it('should serialize data with custom serializer', (done) => {
+        const server = new TestSSEServer(1234, {
+            'serialize': () => { return 'serialized output'; }
+        }).listen();
+
+        sseRequest(
+            1234,
+            1,
+            (event) => {
+                const dataShouldBe = "serialized output";
+                assert.equal(event.data, dataShouldBe);
+                server.close();
+                done();
+            }
+        );
+    });
+
+    it('should get 10 messages with Last-Event-ID set propertly', (done) => {
+        let msgIndex = 0;
+        sseRequest(
+            defaultPort,
+            10,
+            (event) => {
+                const dataShouldBe = defaultMessageBuilder(msgIndex)[1];
+                const idShouldBe   = msgIndex;
+
+                assert.equal(event.lastEventId, idShouldBe);
+                assert.equal(event.data, dataShouldBe);
+
+                msgIndex++;
+                if (msgIndex === 10) done();
+            }
+        );
+    });
+
+    it('should throw error when event name is missing', (done) => {
+        const res = new HTTPResponseMock();
+        const sseResponse = new SSEResponse(res);
+        sseResponse.start();
+
+        assert.throws(() => {
+            sseResponse.send(undefined, 'data');
+        });
+
+        sseResponse.end();
+        done();
+    });
+
+    it('should throw error when event data is missing', (done) => {
+        const res = new HTTPResponseMock();
+        const sseResponse = new SSEResponse(res);
+        sseResponse.start();
+
+        assert.throws(() => {
+            sseResponse.send('message', undefined);
+        });
+
+        sseResponse.end();
+        done();
+    });
+
+    it('should send event headers', (done) => {
+        const res = new HTTPResponseMock();
+        const sseResponse = new SSEResponse(res);
+        sseResponse.start();
+
+        sseResponse.send('message', 'data', 1, 1000);
+        assert.equal(res.written[0], ':ok\n\n');
+        assert.equal(res.written[1], 'event: message\n');
+        assert.equal(res.written[2], 'retry: 1000\n');
+        assert.equal(res.written[3], 'id: 1\n');
+        assert.equal(res.written[4], 'data: data\n\n');
+
+        sseResponse.end();
+        done();
+    });
+
+    it('should handle consecutive line breaks in the data', (done) => {
+        const res = new HTTPResponseMock();
+        const sseResponse = new SSEResponse(res);
+        sseResponse.start();
+
+        sseResponse.send('message', '1\n2\r\n3\n\n4');
+        assert.equal(res.written[0], ':ok\n\n');
+        assert.equal(res.written[1], 'event: message\n');
+        assert.equal(res.written[2], 'data: 1\n');
+        assert.equal(res.written[3], 'data: 2\n');
+        assert.equal(res.written[4], 'data: 3\n');
+        assert.equal(res.written[5], 'data: 4\n\n');
+
+        sseResponse.end();
+        done();
     });
 });
