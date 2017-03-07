@@ -1,6 +1,6 @@
 {
   "name": "kafka-sse",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "KafkaSSE - Kafka Consumer to HTTP SSE/EventSource",
   "main": "index.js",
   "scripts": {
@@ -38,7 +38,7 @@
   "dependencies": {
     "bunyan": "^1.8.1",
     "bluebird": "^3.4.3",
-    "node-rdkafka": "^0.6.0",
+    "node-rdkafka": "^0.8.0",
     "lodash": "^4.15.0",
     "safe-regex": "^1.1.0",
     "node-uuid": "^1.4.7"

@@ -504,8 +504,7 @@ describe('KafkaSSE', function() {
                 return producer.produceAsync(
                     topicName,
                     0,
-                    new Buffer('{"a": "new message"}'),
-                    null
+                    new Buffer('{"a": "new message"}')
                 );
             });
         });
