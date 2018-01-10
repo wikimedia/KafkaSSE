@@ -1,11 +1,11 @@
 {
   "name": "kafka-sse",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "KafkaSSE - Kafka Consumer to HTTP SSE/EventSource",
   "main": "index.js",
   "scripts": {
     "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
-    "test": "npm run test-docker",
+    "test": "npm run test-jenkins",
     "kafka-install": "./test/utils/kafka_install.sh",
     "kafka-start": "./test/utils/kafka.sh start",
     "kafka-stop": "./test/utils/kafka.sh stop",
@@ -38,7 +38,7 @@
   "dependencies": {
     "bunyan": "^1.8.1",
     "bluebird": "^3.4.3",
-    "node-rdkafka": "^0.8.0",
+    "node-rdkafka": "^2.2.1",
     "lodash": "^4.15.0",
     "safe-regex": "^1.1.0",
     "node-uuid": "^1.4.7"

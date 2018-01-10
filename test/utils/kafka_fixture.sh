@@ -1,6 +1,8 @@
 #!/bin/bash
 
-KAFKA_VERSION="${KAFKA_VERSION:-0.9.0.1}"
+set -x
+
+KAFKA_VERSION="${KAFKA_VERSION:-1.0.0}"
 SCALA_VERSION="${SCALA_VERSION:-2.11}"
 # This will only be used if KAFKA_TOPICS_CMD or
 # KAFKA_CONSOLE_PRODUCER_CMD are not defined.
@@ -8,6 +10,7 @@ KAFKA_HOME=${KAFKA_HOME:-"../kafka_${SCALA_VERSION}-${KAFKA_VERSION}"}
 
 KAFKA_TOPICS_CMD=${KAFKA_TOPICS_CMD:-"$KAFKA_HOME/bin/kafka-topics.sh"}
 KAFKA_CONSOLE_PRODUCER_CMD=${KAFKA_CONSOLE_PRODUCER_CMD:-"$KAFKA_HOME/bin/kafka-console-producer.sh"}
+KAFKA_ZOOKEEPER_URL=${KAFKA_ZOOKEEPER_URL:-"localhost:2181"}
 
 echo "Using kafka topics command: $KAFKA_TOPICS_CMD"
 echo "Using kafka console producer command: $KAFKA_CONSOLE_PRODUCER_CMD"
@@ -17,12 +20,12 @@ dropTopics ( ) {
   then
     PATTERN=$1
     echo "looking for topics named '*${PATTERN}*'..."
-    TOPICS=`${KAFKA_TOPICS_CMD} --zookeeper localhost:2181 --list \
+    TOPICS=`${KAFKA_TOPICS_CMD} --zookeeper ${KAFKA_ZOOKEEPER_URL} --list \
     	| grep ${PATTERN} \
     	| grep -v 'marked for deletion$'`
     for TOPIC in ${TOPICS}; do
       echo "Dropping topic ${TOPIC}"
-      ${KAFKA_TOPICS_CMD} --zookeeper localhost:2181 --delete --topic ${TOPIC} > /dev/null &
+      ${KAFKA_TOPICS_CMD} --zookeeper ${KAFKA_ZOOKEEPER_URL} --delete --topic ${TOPIC} > /dev/null &
     done
     wait
   fi
@@ -31,7 +34,7 @@ dropTopics ( ) {
 createTopic ( ) {
     echo "Creating topic ${1}"
     ${KAFKA_TOPICS_CMD} --create \
-        --zookeeper 127.0.0.1:2181             \
+        --zookeeper ${KAFKA_ZOOKEEPER_URL}     \
         --partitions 1                         \
         --replication-factor 1                 \
         --topic $1 > /dev/null

@@ -4,7 +4,7 @@ MAINTAINER Wurstmeister
 
 RUN apk add --update unzip wget curl jq coreutils
 
-ENV KAFKA_VERSION="0.9.0.1" SCALA_VERSION="2.11"
+ENV KAFKA_VERSION="1.0.0" SCALA_VERSION="2.11"
 ADD download_kafka.sh /tmp/download_kafka.sh
 RUN chmod a+x /tmp/download_kafka.sh && sync && /tmp/download_kafka.sh && tar xfz /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C /opt && rm /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz && ln -s /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka
 

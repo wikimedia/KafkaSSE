@@ -1,6 +1,8 @@
 #!/bin/bash
 
-KAFKA_VERSION="${KAFKA_VERSION:-0.9.0.1}"
+set -xe
+
+KAFKA_VERSION="${KAFKA_VERSION:-1.0.0}"
 SCALA_VERSION="${SCALA_VERSION:-2.11}"
 KAFKA_HOME=${KAFKA_HOME:-"../kafka_${SCALA_VERSION}-${KAFKA_VERSION}"}
 
@@ -18,9 +20,8 @@ echo "Installing kafka at $KAFKA_HOME"
 
 CXX=g++-4.8
 
-wget http://www.us.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -O /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -O /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 mkdir -pv ${KAFKA_HOME} && tar vxzf /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C ${KAFKA_HOME} --strip-components 1
-echo 'delete.topic.enable=true' >> ${KAFKA_HOME}/config/server.properties
 
 # Link installed kafka logs into jenkins workspace logs so that jenkins can pick them up.
 if [ -n "${WORKSPACE}" ]; then
