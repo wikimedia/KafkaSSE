@@ -16,6 +16,14 @@ a JSON array of objects describing each latest topic, partition and offset seen 
 On a reconnect, this object will be sent back as the `Last-Event-ID` header, and will be used
 by KafkaSSE to assign a KafkaConsumer to start from those offsets.
 
+If the underlying Kafka cluster supports timestamp based consumption, the `Last-Event-ID`
+header may initially provide assignments with `timestamp` entries instead of `offset`.
+If `timestamp`s are provided, then Kafka will be quried for the offsets that most closely
+belong to the provided timestamps.  This allows for historical consumption from Kafka
+without having to know the logical Kafka partition offsets for particular times in the past.
+
+See client.js for a couple of examples of `Last-Event-ID` offset and timestamp based assignment.
+
 See also [Kasocki](https://github.com/wikimedia/kasocki).
 
 ## Usage
@@ -183,13 +191,13 @@ KafkaSSE uses the [Standard Non flowing API](https://github.com/Blizzard/node-rd
 ## Testing
 
 ### On host
-Mocha tests require a running 0.9+ Kafka broker at `localhost:9092` with
+Mocha tests require a running 0.11+ Kafka broker at `localhost:9092` with
 `delete.topic.enable=true`.  `test/utils/kafka_fixture.sh` will prepare
 topics in Kafka for tests.  `npm test` will download, install, and run
 a Kafka broker.  If you already have one running locally, then
 `npm run test-local` will be easier to run.  You may set the `KAFKA_TOPICS_CMD` and
 the `KAFKA_CONSOLE_PRODUCER_CMD` environment variables if you would like to override
-the commands used in`kafka_fixtue.sh`.
+the commands used in `kafka_fixture.sh`.
 
 ### With Docker
 Testing with docker requires docker-engine >- 1.12.4 and docker-compose >= 1.9.0.

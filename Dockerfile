@@ -9,9 +9,10 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 ENV NODE_VERSION "8.x"
 
 # Install needed packages:
+# NOTE: librdkafka 0.11 is built and tested against libssl1.0.  1.1 causes a segfault.
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y build-essential curl g++ net-tools libsasl2-dev libssl-dev libcrypto++-dev
+    apt-get install -y build-essential curl g++ net-tools libsasl2-dev libssl1.0-dev libcrypto++-dev
 
 # Install node
 RUN curl -sL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - && \

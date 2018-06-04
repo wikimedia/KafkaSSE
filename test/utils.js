@@ -82,6 +82,21 @@ describe('validateAssignments', () => {
         assert.ok(utils.validateAssignments(assignments));
     });
 
+    it('should validate an array of assignment objects with timestamp set', () => {
+        assert.ok(utils.validateAssignments.bind(undefined,
+            [{ topic: 'test1', partition: 1, timestamp: 1527799576433 } ]
+        ));
+    });
+
+    it('should validate an combination of topic names and assignment objects', () => {
+        let assignments = [
+            'test0',
+            { topic: 'test1', partition: 0, offset: 456 },
+            { topic: 'test1', partition: 1, timestamp: 1527799576433 }
+        ]
+        assert.ok(utils.validateAssignments(assignments));
+    });
+
     it('should fail validation of a non array', () => {
         assert.throws(utils.validateAssignments.bind(undefined, 'nope'));
     });
@@ -118,12 +133,13 @@ describe('validateAssignments', () => {
             [{ topic: 'test1', partition: 1, offset: ['bad', 'offset'] } ]
         ));
     });
+
 });
 
 
-describe('buildAssignments', () => {
+describe('topicsToPartitionAssignment', () => {
     it('should return empty array if topic does not exist', () => {
-        let assignments = utils.buildAssignments(topicsInfo, ['does-not-exist']);
+        let assignments = utils.topicsToPartitionAssignment(topicsInfo, ['does-not-exist']);
         assert.deepEqual(
             assignments,
             []
@@ -131,7 +147,7 @@ describe('buildAssignments', () => {
     });
 
     it('should return assignments for a single partition topic', () => {
-        let assignments = utils.buildAssignments(topicsInfo, ['test0']);
+        let assignments = utils.topicsToPartitionAssignment(topicsInfo, ['test0']);
         assert.deepEqual(
             assignments,
             [ { topic: 'test0', partition: 0, offset: -1 } ]
@@ -139,7 +155,7 @@ describe('buildAssignments', () => {
     });
 
     it('should return assignments for a multiple partition topic', () => {
-        let assignments = utils.buildAssignments(topicsInfo, ['test1']);
+        let assignments = utils.topicsToPartitionAssignment(topicsInfo, ['test1']);
         assert.deepEqual(
             assignments,
             [
@@ -150,7 +166,7 @@ describe('buildAssignments', () => {
     });
 
     it('should return assignments for a multiple topics', () => {
-        let assignments = utils.buildAssignments(topicsInfo, ['test0', 'test1']);
+        let assignments = utils.topicsToPartitionAssignment(topicsInfo, ['test0', 'test1']);
         assert.deepEqual(
             assignments,
             [

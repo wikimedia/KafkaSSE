@@ -44,6 +44,7 @@ const customDeserializedMessage = {
         partition: 0,
         // This offset is bad, but we'll use it for testing the deserializer.
         offset: 12345,
+        timestamp: 0,
         key: null,
     }
 }
@@ -360,6 +361,29 @@ describe('KafkaSSE', function() {
         const assignment = [
             {topic: topicNames[0], partition: 0, offset: 0},
             {topic: topicNames[1], partition: 0, offset: 0},
+        ];
+
+        const topics = assignment.map(a => a.topic);
+
+        const shouldConsumeOffsets = [
+            {topic: topicNames[0], partition: 0, offset: 0},
+            {topic: topicNames[1], partition: 0, offset: 0},
+            {topic: topicNames[1], partition: 0, offset: 1},
+        ];
+
+        sseRequest(
+            serverPort,
+            'default',
+            topics,
+            assignment,
+            assertMessagesConsumedSpy(shouldConsumeOffsets, done)
+        );
+    });
+
+    it('should consume 3 messages from two topics each starting from timestamp 600 seconds ago', (done) => {
+        const assignment = [
+            {topic: topicNames[0], partition: 0, timestamp: Date.now() - (600*1000)},
+            {topic: topicNames[1], partition: 0, timestamp: Date.now() - (600*1000)}
         ];
 
         const topics = assignment.map(a => a.topic);

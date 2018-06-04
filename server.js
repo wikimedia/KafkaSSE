@@ -22,12 +22,17 @@ class KafkaSSEServer {
     constructor() {
         this.server = http.createServer();
         this.server.on('request', (req, res) => {
-            const topics = req.url.replace('/', '').split(',');
+            const splitUrl = req.url.replace('/', '').split("?timestamp=");
+            const topics = splitUrl[0].split(',');
             console.log(`Handling SSE request for topics ${topics}`);
             const options = {
                 kafkaConfig: { 'metadata.broker.list':  kafkaBroker }
             }
-            kafkaSseHandler(req, res, topics, options);
+
+            let atTimestamp = splitUrl.length > 1 ? Number(splitUrl[1]) : undefined;
+
+            // const atTimestamp = 'timestamp' in req.params ? Number(req.params.timestamp) : undefined;
+            kafkaSseHandler(req, res, topics, options, atTimestamp);
         });
     }
 
