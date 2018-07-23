@@ -3,6 +3,7 @@
 const SSEResponse = require('../lib/SSEResponse');
 
 const _           = require('lodash');
+const P           = require('bluebird');
 const http        = require('http');
 const EventSource = require('eventsource');
 const fetch       = require('node-fetch');
@@ -44,21 +45,23 @@ function objectMessageBuilder(id) {
     return ['message', {'data': id}];
 }
 
+function sendN(sse, messageBuilder, n, idx) {
+    if (n <= idx) {
+        return P.resolve();
+    }
+    const msg = messageBuilder(idx);
+    return sse.send(msg[0], msg[1], idx, 1000)
+    .then(() => sendN(sse, messageBuilder, n, idx + 1));
+}
+
 /**
  * Creates a new SSEResponse object and sends n messages.
  */
 function sseSendN(res, n, options, messageBuilder) {
     let sseResponse = new SSEResponse(res, options);
-    sseResponse.start();
-
-    let id = 0;
-    _.times(n, () => {
-        const message = messageBuilder(id);
-        sseResponse.send(message[0], message[1], id, 1000);
-        id++;
-    });
-
-    sseResponse.end();
+    sseResponse.start()
+    .then(() => sendN(sseResponse, messageBuilder, n, 0))
+    .then(() => sseResponse.end());
 }
 
 /**
@@ -117,6 +120,7 @@ class HTTPResponseMock {
 
     write(text) {
         this.written.push(text);
+        return true;
     }
 
     headersSent() {
@@ -127,8 +131,11 @@ class HTTPResponseMock {
         return this.finished;
     }
 
-    end() {
+    end(cb) {
         this.finished = true;
+        if (cb) {
+            cb();
+        }
     }
 }
 
@@ -225,62 +232,62 @@ describe('SSEResponse', function() {
         );
     });
 
-    it('should throw error when event name is missing', (done) => {
+    it('should throw error when event name is missing', () => {
+        let rejected = false;
         const res = new HTTPResponseMock();
         const sseResponse = new SSEResponse(res);
-        sseResponse.start();
-
-        assert.throws(() => {
-            sseResponse.send(undefined, 'data');
+        return sseResponse.start()
+        .then(() => sseResponse.send(undefined, 'data'))
+        .catch((e) => {
+            rejected = true;
+        }).finally(() => {
+            return sseResponse.end().then(() => {
+                assert.ok(rejected);
+            });
         });
-
-        sseResponse.end();
-        done();
     });
 
-    it('should throw error when event data is missing', (done) => {
+    it('should throw error when event data is missing', () => {
+        let rejected = false;
         const res = new HTTPResponseMock();
         const sseResponse = new SSEResponse(res);
-        sseResponse.start();
-
-        assert.throws(() => {
-            sseResponse.send('message', undefined);
+        return sseResponse.start()
+        .then(() => sseResponse.send('message', undefined))
+        .catch((e) => {
+            rejected = true;
+        }).finally(() => {
+            return sseResponse.end().then(() => {
+                assert.ok(rejected);
+            });
         });
-
-        sseResponse.end();
-        done();
     });
 
-    it('should send event headers', (done) => {
+    it('should send event headers', () => {
         const res = new HTTPResponseMock();
         const sseResponse = new SSEResponse(res);
-        sseResponse.start();
-
-        sseResponse.send('message', 'data', 1, 1000);
-        assert.equal(res.written[0], ':ok\n\n');
-        assert.equal(res.written[1], 'event: message\n');
-        assert.equal(res.written[2], 'retry: 1000\n');
-        assert.equal(res.written[3], 'id: 1\n');
-        assert.equal(res.written[4], 'data: data\n\n');
-
-        sseResponse.end();
-        done();
+        return sseResponse.start()
+        .then(() => sseResponse.send('message', 'data', 1, 1000))
+        .then(() => {
+            assert.equal(res.written[0], ':ok\n\n');
+            assert.equal(res.written[1], 'event: message\n');
+            assert.equal(res.written[2], 'retry: 1000\n');
+            assert.equal(res.written[3], 'id: 1\n');
+            assert.equal(res.written[4], 'data: data\n\n');
+        }).finally(() => sseResponse.end());
     });
 
-    it('should handle consecutive line breaks in the data', (done) => {
+    it('should handle consecutive line breaks in the data', () => {
         const res = new HTTPResponseMock();
         const sseResponse = new SSEResponse(res);
-        sseResponse.start();
-
-        sseResponse.send('message', '1\n2\r\n3\n\n4');
-        assert.equal(res.written[0], ':ok\n\n');
-        assert.equal(res.written[1], 'event: message\n');
-        assert.equal(res.written[2], 'data: 1\n');
-        assert.equal(res.written[3], 'data: 2\n');
-        assert.equal(res.written[4], 'data: 3\n');
-        assert.equal(res.written[5], 'data: 4\n\n');
-
-        sseResponse.end();
-        done();
+        return sseResponse.start()
+        .then(() => sseResponse.send('message', '1\n2\r\n3\n\n4'))
+        .then(() => {
+            assert.equal(res.written[0], ':ok\n\n');
+            assert.equal(res.written[1], 'event: message\n');
+            assert.equal(res.written[2], 'data: 1\n');
+            assert.equal(res.written[3], 'data: 2\n');
+            assert.equal(res.written[4], 'data: 3\n');
+            assert.equal(res.written[5], 'data: 4\n\n');
+        }).finally(() => sseResponse.end());
     });
 });
