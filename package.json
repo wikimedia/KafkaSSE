@@ -36,10 +36,10 @@
   },
   "homepage": "https://github.com/wikimedia/kafkasse#readme",
   "dependencies": {
-    "bluebird": "^3.4.3",
+    "bluebird": "^3.5.1",
     "bunyan": "^1.8.1",
     "lodash": "^4.15.0",
-    "node-rdkafka": "2.3.3",
+    "node-rdkafka": "^2.3.4",
     "node-uuid": "^1.4.7",
     "safe-regex": "^1.1.0"
   },
