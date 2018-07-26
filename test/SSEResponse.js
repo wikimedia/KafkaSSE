@@ -127,6 +127,18 @@ class HTTPResponseMock {
         return this.headers !== undefined;
     }
 
+    on(event, cb) {
+        // do nothing
+    }
+
+    once(event, cb) {
+        // do nothing
+    }
+
+    removeListener(event, cb) {
+        // do nothing
+    }
+
     finished() {
         return this.finished;
     }
