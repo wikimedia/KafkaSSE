@@ -26,7 +26,8 @@ class KafkaSSEServer {
             const topics = splitUrl[0].split(',');
             console.log(`Handling SSE request for topics ${topics}`);
             const options = {
-                kafkaConfig: { 'metadata.broker.list':  kafkaBroker }
+                kafkaConfig: { 'metadata.broker.list':  kafkaBroker },
+                useTimestampForId: true
             }
 
             let atTimestamp = splitUrl.length > 1 ? Number(splitUrl[1]) : undefined;

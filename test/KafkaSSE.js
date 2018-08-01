@@ -118,6 +118,13 @@ class TestKafkaSSEServer {
                 kafkaConfig: { 'metadata.broker.list': kafkaBroker },
                 allowedTopics: ['_nope_not_a_topic']
             },
+
+            // timestamp_id uses timestamps in Last-Event-ID instead of offsets.
+            timestamp_id: {
+                logger: this.log,
+                kafkaConfig: { 'metadata.broker.list': kafkaBroker },
+                useTimestampForId: true
+            },
         }
 
         // Kafka broker should be running at `kafkaBroker`.
@@ -126,6 +133,9 @@ class TestKafkaSSEServer {
             // /default/:topics         - no special options
             // /restrictive/:topics     - only allowed topics
             // /deserializer/:topics    - custom deserializer
+            // /filter/:topics          - custom filterer
+            // /notopics/:topics        - no topics available
+            // /timestamp_id/:topics    - uses timestamps in Last-Event-ID instead of offsets
 
             const urlSplit = _.filter(req.url.split('/'), e => e != '');
             const route = urlSplit[0];
@@ -208,7 +218,7 @@ function httpRequestAsync(port, route, topics, last_event_id) {
  * msgCb will be called for each onmessage event, and errCb
  * will be called for each onerror event.  This returns
  * the new EventSource with the onmessage and onerror handlers
- * registered.  msgCb will be given event.data parsed as JSON.
+ * registered.  msgCb will be given the SSE event object.
  *
  */
 function sseRequest(port, route, topics, last_event_id, msgCb, errCb)  {
@@ -242,8 +252,8 @@ function sseRequest(port, route, topics, last_event_id, msgCb, errCb)  {
 
     if (msgCb) {
         es.onmessage = (event) => {
-            // Call msgCb with the event data parsed as JSON.
-            msgCb(JSON.parse(event.data));
+            // Call msgCb with the event
+            msgCb(event);
         }
     }
 
@@ -273,7 +283,8 @@ function assertMessagesConsumedSpy(shouldConsumeOffsets, done) {
         if (spy.callCount >= callCountShouldBe) {
             // Collect messages from the msgCb that each
             // successful message event has called.
-            let kafkaMessages = spy.args.map((args) => args[0]);
+            let events = spy.args.map((args) => args[0]);
+            let kafkaMessages = events.map((event) => JSON.parse(event.data));
             assert.topicOffsetsInMessages(kafkaMessages, shouldConsumeOffsets);
             assert.equal(spy.callCount, callCountShouldBe);
             done();
@@ -551,7 +562,7 @@ describe('KafkaSSE', function() {
             spyWithCb(spy => {
                 if (spy.callCount >= 1) {
                     // message returned to us is the first arg of the first spied call
-                    const message = spy.args[0][0];
+                    const message = JSON.parse(spy.args[0][0].data);
                     assert(message['i am'], customDeserializedMessage['i am'], 'message object should be set by custom deserializer');
                     assert(message._kafka.offset, customDeserializedMessage._kafka.offset, 'offset should be set by custom deserializer');
                     done();
@@ -576,8 +587,31 @@ describe('KafkaSSE', function() {
             spyWithCb(spy => {
                 if (spy.callCount >= 1) {
                     // message returned to us is the first arg of the first spied call
-                    const message = spy.args[0][0];
+                    const message = JSON.parse(spy.args[0][0].data);
                     assert(message.id, 2, 'should only consume one message with id because of custom filter');
+                    done();
+                }
+            })
+        );
+    });
+
+    // == Test using timestamps instead of offsets in Last-Event-ID
+    it('should consume 1 message from one topic starting at offset 0 and use timestamp in Last-Event-ID', (done) => {
+        const assignment = [
+            {topic: topicNames[0], partition: 0, offset: 0},
+        ];
+
+        sseRequest(
+            serverPort,
+            'timestamp_id',
+            [topicNames[0]],
+            assignment,
+            spyWithCb(spy => {
+                if (spy.callCount >= 1) {
+                    // event returned to us is the first arg of the first spied call
+                    const event = spy.args[0][0];
+                    const lastEventId = JSON.parse(event.lastEventId)
+                    assert.ok('timestamp' in lastEventId[0] && !('offset' in lastEventId[0]), 'event id should contain timestamp instead of offset');
                     done();
                 }
             })

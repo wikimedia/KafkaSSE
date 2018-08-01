@@ -12,15 +12,25 @@ The `Last-Event-ID` and EventSource `id` field will be used to handle auto-resum
 during client disconnects.  By using EventSource to connect to a KafkaSSE endpoint,
 your client will automatically resume from where it left off if it gets disconnected
 from the server.  Every message sent to the client will have an `id` field that will be
-a JSON array of objects describing each latest topic, partition and offset seen by this client.
-On a reconnect, this object will be sent back as the `Last-Event-ID` header, and will be used
-by KafkaSSE to assign a KafkaConsumer to start from those offsets.
+a JSON array of objects describing each latest topic, partition and either offset or timestamp
+seen by this client. On a reconnect, this object will be sent back as the `Last-Event-ID` header,
+and will be used by KafkaSSE to assign a KafkaConsumer to start from those offsets.
 
 If the underlying Kafka cluster supports timestamp based consumption, the `Last-Event-ID`
 header may initially provide assignments with `timestamp` entries instead of `offset`.
 If `timestamp`s are provided, then Kafka will be quried for the offsets that most closely
 belong to the provided timestamps.  This allows for historical consumption from Kafka
 without having to know the logical Kafka partition offsets for particular times in the past.
+
+KafkaSSE can be configured to always use timestamps instead of offsets in the EventSource event
+`id` field via the `useTimestampForId` option. If this option is true, each EventSource event id
+(which automatically is used for the Last-Event-ID header) will be set with the Kafka message
+`timestamp` instead of `offset`.  This is less precise than using offsets, but is better if
+you need to hide the underlying Kafka cluster's message offsets to support multi-DC.
+If users want to use offsets, they can manually modify the Last-Event-ID header before
+reconnecting with the latest message offsets instead of timestamps. `offset` in the
+Last-Event-ID will take precedence over `timestamp` if present.
+
 
 See client.js for a couple of examples of `Last-Event-ID` offset and timestamp based assignment.
 
