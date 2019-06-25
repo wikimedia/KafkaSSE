@@ -38,10 +38,10 @@
   "dependencies": {
     "bluebird": "^3.5.1",
     "bunyan": "^1.8.1",
-    "cassandra-uuid": "^0.0.2",
     "lodash": "^4.15.0",
     "node-rdkafka": "^2.3.4",
-    "safe-regex": "^1.1.0"
+    "safe-regex": "^1.1.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "istanbul": "^0.4.4",
