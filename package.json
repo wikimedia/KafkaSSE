@@ -15,7 +15,6 @@
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "test-local": "npm run kafka-fixture && npm run coverage",
     "test-jenkins": "npm run kafka-install && npm run kafka-stop && npm run kafka-start && npm run kafka-fixture && npm run coverage && npm run kafka-stop",
-    "test-travis": "npm run kafka-install && npm run kafka-start && npm run kafka-fixture && npm run coverage && npm run coveralls",
     "test-docker": "./test/docker-tests.sh"
   },
   "repository": {
